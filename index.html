@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard Project Automation</title>
+<style>
+:root{--bg:#f1f5fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--ok:#10b981;--run:#3b82f6;--warn:#f59e0b;--crit:#ef4444;--off:#94a3b8;--p1:#6366f1;--p2:#06b6d4;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b1020;--card:#131a2e;--text:#e6ebf5;--muted:#8b97b0;--line:#222d47;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1020;--card:#131a2e;--text:#e6ebf5;--muted:#8b97b0;--line:#222d47;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;
+  background-image:radial-gradient(900px 400px at 10% -10%,rgba(99,102,241,.18),transparent),radial-gradient(700px 400px at 100% 0%,rgba(6,182,212,.14),transparent);background-attachment:fixed;padding:env(safe-area-inset-top,0px) 16px 32px}
+.wrap{max-width:1200px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:20px 0 12px}
+h1{font-size:24px;margin:0;background:linear-gradient(90deg,var(--p1),var(--p2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:12px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 20px;background:var(--card);border:1px solid var(--line);padding:5px;border-radius:14px;width:fit-content;max-width:100%}
+nav button{font:inherit;border:0;background:transparent;color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;transition:.2s}
+nav button:hover{color:var(--text)}
+nav button.active{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.35)}
+.hide{display:none}
+.fade{animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+button{font:inherit;color:var(--text);cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:10px;transition:.2s}
+.btn:hover{border-color:var(--p1);color:var(--p1)}
+.btn.primary{background:linear-gradient(135deg,var(--p1),var(--p2));border:0;color:#fff}
+.btn.danger:hover{border-color:var(--crit);color:var(--crit)}
+.ibtn{border:1px solid var(--line);background:var(--bg);width:30px;height:30px;border-radius:8px;font-size:13px;display:inline-grid;place-items:center}
+.ibtn:hover{border-color:var(--p1)}
+.ibtn.danger:hover{border-color:var(--crit)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;transition:transform .2s}
+.kpi:hover{transform:translateY(-2px)}
+.ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;color:#fff;flex:none}
+.kpi b{display:block;font-size:24px;line-height:1.1}
+.kpi span{color:var(--muted);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;overflow-x:auto}
+.card h2{font-size:15px;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.two{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.legend{display:grid;gap:6px;width:100%;font-size:13px}
+.legend div{display:flex;justify-content:space-between;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+.prog{display:grid;grid-template-columns:minmax(150px,1fr) 1.4fr 56px minmax(160px,1.3fr);gap:14px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)}
+.prog:last-child{border-bottom:0}
+.track{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--p1),var(--p2));transition:width .6s ease}
+.pct{font-weight:700;text-align:right}
+.pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;display:inline-block}
+.p-ok{background:rgba(16,185,129,.15);color:var(--ok)}
+.p-run{background:rgba(59,130,246,.15);color:var(--run)}
+.p-crit{background:rgba(239,68,68,.15);color:var(--crit)}
+.p-off{background:rgba(148,163,184,.2);color:var(--muted)}
+.p-warn{background:rgba(245,158,11,.15);color:var(--warn)}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;transition:.2s}
+.pc:hover{box-shadow:0 10px 26px rgba(15,23,42,.08);transform:translateY(-2px)}
+.pc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pc-acts{display:flex;gap:6px;margin-top:4px}
+.avatar{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-weight:700;font-size:10px;background:linear-gradient(135deg,var(--p1),var(--p2));flex:none}
+.pc-meta{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+select,input{font:inherit;color:var(--text)}
+select,.field input,.field select,.search{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+select.st{padding:6px 8px;border-radius:8px}
+input[type=range]{width:100%;accent-color:var(--p1)}
+.search{min-width:200px;flex:1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{font-size:12px;border:1px solid var(--line);background:var(--bg);color:var(--muted);padding:6px 12px;border-radius:999px}
+.chips button.on{background:var(--p1);border-color:var(--p1);color:#fff}
+.docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.doc{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;background:var(--bg);transition:.2s}
+.doc:hover{border-color:var(--p1);transform:translateY(-2px)}
+.doc .ico{width:38px;height:38px;font-size:18px}
+.doc div.t{flex:1;min-width:0}
+.doc b{font-size:13px;display:block;margin-bottom:4px}
+.doc small{color:var(--muted);font-size:11px}
+.doc .acts{display:flex;gap:4px;margin-top:6px}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:10px 8px;border-bottom:1px solid var(--line)}
+td{padding:12px 8px;border-bottom:1px solid var(--line)}
+tr:hover td{background:rgba(99,102,241,.04)}
+.stock{display:flex;align-items:center;gap:8px}
+.stock button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:16px;line-height:1}
+.stock button:hover{border-color:var(--p1);color:var(--p1)}
+.stock b{min-width:34px;text-align:center}
+.mini{width:70px;height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+.mini i{display:block;height:100%;background:var(--ok)}
+.mini i.low{background:var(--warn)} .mini i.zero{background:var(--crit)}
+.tl{position:relative;min-width:780px}
+.tl-head,.tl-row{display:grid;grid-template-columns:200px 1fr;align-items:center}
+.tl-head{height:30px;font-size:11px;color:var(--muted);font-weight:600}
+.months{position:relative;height:100%}
+.months span{position:absolute;top:6px}
+.tl-row{min-height:50px;border-top:1px solid var(--line)}
+.tl-track{position:relative;height:50px}
+.tl-bar{position:absolute;top:13px;height:24px;border-radius:8px;color:#fff;font-size:11px;font-weight:600;line-height:24px;padding:0 8px;white-space:nowrap;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.12);background:linear-gradient(90deg,var(--run),#60a5fa)}
+.tl-bar.ok{background:linear-gradient(90deg,#10b981,#34d399)}
+.tl-bar.warn{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.tl-bar.crit{background:linear-gradient(90deg,#ef4444,#f87171)}
+.tl-bar.off{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
+.gridline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--crit);box-shadow:0 0 8px var(--crit);z-index:2}
+.today::after{content:"Today";position:absolute;top:-2px;left:6px;font-size:10px;color:var(--crit);white-space:nowrap;font-weight:700}
+.data-box{width:100%;min-height:260px;font-family:ui-monospace,monospace;font-size:12px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal.open{display:flex}
+.box{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.box h3{margin:0 0 14px;font-size:17px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;font-size:12px;color:var(--muted);font-weight:600}
+.field input,.field select{color:var(--text);font-weight:400;font-size:14px;width:100%}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Project Automation</h1>
+    <div class="sub" id="clock"></div>
+  </div>
+  <span class="sub" id="sync">Connecting…</span>
+</header>
+
+<nav id="nav">
+  <button data-tab="report" class="active">📊 Report</button>
+  <button data-tab="tracker">🗂️ Tracker</button>
+  <button data-tab="timeline">📅 Timeline</button>
+  <button data-tab="docs">📚 Manuals & Spare Parts</button>
+  <button data-tab="data">⚙️ Backup</button>
+</nav>
+
+<section id="tab-report" class="fade">
+  <div class="kpis">
+    <div class="kpi"><div class="ico" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">📁</div><div><b id="rTotal">0</b><span>Total projects</span></div></div>
+    <div class="kpi"><div class="ico" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)">⚡</div><div><b id="rRun">0</b><span>In progress</span></div></div>
+    <div class="kpi"><div class="ico" style="background:linear-gradient(135deg,#ef4444,#f97316)">⏰</div><div><b id="rLate">0</b><span>Overdue</span></div></div>
+    <div class="kpi"><div class="ico" style="background:linear-gradient(135deg,#10b981,#84cc16)">📈</div><div><b id="rAvg">0%</b><span>Avg. progress</span></div></div>
+    <div class="kpi"><div class="ico" style="background:linear-gradient(135deg,#f59e0b,#eab308)">📦</div><div><b id="rLow">0</b><span>Low-stock spare parts</span></div></div>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h2>Project status</h2>
+      <div class="donut-wrap"><svg id="donut" width="170" height="170" viewBox="0 0 42 42"></svg><div class="legend" id="legend"></div></div>
+    </div>
+    <div class="card">
+      <h2>Progress per project</h2>
+      <div id="reportRows"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>🏭 Machine photos <button class="btn primary" data-act="add" data-t="MESIN">+ Add machine</button></h2>
+    <div class="docs" id="machineGrid"></div></div>
+</section>
+
+<section id="tab-tracker" class="hide fade">
+  <div class="toolbar"><button class="btn primary" data-act="add" data-t="P">+ Add project</button></div>
+  <div class="pcards" id="pcards"></div>
+</section>
+
+<section id="tab-timeline" class="hide fade">
+  <div class="card"><h2>Timeline</h2><div class="tl" id="tl"></div></div>
+</section>
+
+<section id="tab-docs" class="hide fade">
+  <div class="card">
+    <h2>📚 Manual documents <button class="btn primary" data-act="add" data-t="DOC">+ Add document</button></h2>
+    <div class="toolbar"><input class="search" id="docSearch" placeholder="Search documents..."></div>
+    <div class="chips" id="docChips" style="margin-bottom:14px"></div>
+    <div class="docs" id="docGrid"></div>
+  </div>
+  <div class="card">
+    <h2>🔩 Spare parts list <button class="btn primary" data-act="add" data-t="SP">+ Add spare part</button></h2>
+    <div class="toolbar"><input class="search" id="spSearch" placeholder="Search code, name, or machine..."></div>
+    <table>
+      <thead><tr><th>Code</th><th>Name</th><th>Machine</th><th>Location</th><th>Stock</th><th>Level</th><th>Status</th><th></th></tr></thead>
+      <tbody id="spBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="tab-data" class="hide fade">
+  <div class="card">
+    <h2>⚙️ Backup backup</h2>
+    <p class="sub" style="margin-top:0">Copy the box contents below to save a backup. Paste them back and click "Restore" to recover data.</p>
+    <textarea class="data-box" id="dataBox"></textarea>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn" data-act="export">Show data</button>
+      <button class="btn primary" data-act="import">Restore from text</button>
+      <button class="btn danger" data-act="reset">Reset to sample data</button>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="mTitle"></h3>
+    <div id="mForm"></div>
+    <div class="btns">
+      <button class="btn" data-act="cancel">Cancel</button>
+      <button class="btn primary" data-act="save">Save</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = "dash-pa-v3";
+const SAMPLE = {
+  P: [
+    { nama: "PLC Integration Line 1",   pic: "Andi", mulai: "2026-01-12", selesai: "2026-03-30", status: "Done",  progres: 100 },
+    { nama: "Robot Welding Cell",     pic: "Rina", mulai: "2026-02-02", selesai: "2026-06-15", status: "Done",  progres: 100 },
+    { nama: "SCADA Dashboard Plant",  pic: "Budi", mulai: "2026-04-01", selesai: "2026-10-10", status: "Running", progres: 62 },
+    { nama: "Conveyor Automation",    pic: "Sari", mulai: "2026-06-01", selesai: "2026-11-20", status: "Running", progres: 45 },
+    { nama: "Vision Inspection QC",   pic: "Dedi", mulai: "2026-07-10", selesai: "2026-10-05", status: "Running", progres: 30 },
+    { nama: "Predictive Maintenance", pic: "Maya", mulai: "2026-09-01", selesai: "2026-12-18", status: "Not started",    progres: 5 },
+    { nama: "HMI Migration Line 2",     pic: "Andi", mulai: "2026-10-20", selesai: "2027-01-30", status: "Not started",    progres: 0 }
+  ],
+  SP: [
+    { kode: "SP-001", nama: "Sensor proximity M18",   mesin: "Conveyor Line A", lokasi: "Shelf A1",   min: 10, stok: 4 },
+    { kode: "SP-002", nama: "24VDC relay, 4 contacts",   mesin: "Panel PLC",       lokasi: "Shelf A2",   min: 15, stok: 22 },
+    { kode: "SP-003", nama: "Servo motor 750W",       mesin: "Robot Welding",   lokasi: "Warehouse B", min: 2,  stok: 1 },
+    { kode: "SP-004", nama: "Conveyor belt 5 m",      mesin: "Conveyor Line A", lokasi: "Warehouse B", min: 2,  stok: 3 },
+    { kode: "SP-005", nama: "Compressor air filter", mesin: "Compressor",       lokasi: "Shelf C1",   min: 6,  stok: 9 },
+    { kode: "SP-006", nama: "Industrial camera 5MP",    mesin: "Vision QC",       lokasi: "Shelf B3",   min: 2,  stok: 0 },
+    { kode: "SP-007", nama: "Modul I/O Profinet",     mesin: "Panel PLC",       lokasi: "Shelf A2",   min: 3,  stok: 6 }
+  ],
+  DOC: [
+    { nama: "PLC Siemens S7-1500 Operation Manual", kat: "Operation Manual", ver: "v2.1", tgl: "2026-08-14", ico: "📘" },
+    { nama: "Robot Welding Maintenance Guide",  kat: "Maintenance",    ver: "v1.4", tgl: "2026-06-02", ico: "🛠️" },
+    { nama: "Automation Area Safety SOP",      kat: "SOP",            ver: "v3.0", tgl: "2026-01-20", ico: "🦺" },
+    { nama: "Wiring Diagram Panel Line 1",        kat: "Technical",         ver: "v1.0", tgl: "2026-03-28", ico: "🔌" },
+    { nama: "SCADA & Alarm Configuration",          kat: "Technical",         ver: "v0.9", tgl: "2026-09-30", ico: "🖥️" },
+    { nama: "Checklist Preventive Maintenance",   kat: "Maintenance",    ver: "v2.0", tgl: "2026-05-11", ico: "✅" }
+  ]
+};
+
+SAMPLE.MESIN = [
+  { nama: "CNC Machine 1", lokasi: "Line 1" },
+  { nama: "Robot Welding Cell", lokasi: "Line 2" },
+  { nama: "Conveyor Line A", lokasi: "Line 1" },
+  { nama: "Air Compressor", lokasi: "Utilities" }
+];
+
+const SCHEMA = {
+  P:   { title: "Project", fields: [["nama","Project name","text"],["pic","PIC","text"],["mulai","Start date","date"],["selesai","Target end date","date"],["status","Status","select",["Not started","Running","Done"]],["progres","Progress (%)","number"],["remarks","Remarks","text"]] },
+  SP:  { title: "Sparepart", fields: [["kode","Code","text"],["nama","Name","text"],["mesin","Machine","text"],["lokasi","Location","text"],["min","Minimum stock","number"],["stok","Stock","number"]] },
+  MESIN: { title: "Machine", fields: [["nama","Machine name","text"],["lokasi","Location","text"]] },
+  DOC: { title: "Document", fields: [["nama","Document name","text"],["kat","Category","text"],["ver","Version","text"],["tgl","Date","date"],["ico","Icon (emoji)","text"]] }
+};
+
+const LOAD = () => { try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (e) {} return JSON.parse(JSON.stringify(SAMPLE)); };
+let DB = JSON.parse(JSON.stringify(SAMPLE));
+const MIG = { "Belum": "Not started", "Berjalan": "Running", "Selesai": "Done", "Teknis": "Technical", "Manual Operasi": "Operation Manual", "Lainnya": "Other" };
+function migrate(o) {
+  (o.P || []).forEach(p => { p.status = MIG[p.status] || p.status; });
+  (o.DOC || []).forEach(x => { x.kat = MIG[x.kat] || x.kat; });
+  return o;
+}
+// ===== GitHub storage =====
+// Ganti USERNAME dengan nama akun GitHub Anda dan project-automation-dashboard dengan nama repository Anda.
+const REPO = "USERNAME/project-automation-dashboard";
+const BRANCH = "main";
+const API = `https://api.github.com/repos/${REPO}/contents/data.json`;
+let SHA = null, PENDING = 0, ERR = "";
+let QUEUE = Promise.resolve();
+
+const setSync = (t, bad) => { const el = document.querySelector("#sync"); if (el) { el.textContent = t; el.style.color = bad ? "var(--crit)" : "var(--muted)"; } };
+const b64ToUtf8 = b => new TextDecoder().decode(Uint8Array.from(atob(b), c => c.charCodeAt(0)));
+const utf8ToB64 = s => { let bin = ""; new TextEncoder().encode(s).forEach(b => bin += String.fromCharCode(b)); return btoa(bin); };
+const getToken = () => {
+  let t = localStorage.getItem("gh-token");
+  if (!t) { t = prompt("Paste your GitHub token (Contents: Read and write)"); if (t) { t = t.trim(); localStorage.setItem("gh-token", t); } }
+  return t;
+};
+const ghHeaders = t => ({ Accept: "application/vnd.github+json", ...(t ? { Authorization: `Bearer ${t}` } : {}) });
+
+async function loadRemote() {
+  if (PENDING) return;
+  try {
+    const r = await fetch(API + "?ref=" + BRANCH, { headers: ghHeaders(localStorage.getItem("gh-token")), cache: "no-store" });
+    if (r.status === 404) { SHA = null; setSync("Live · no saved data yet"); return; }
+    if (!r.ok) throw new Error(String(r.status));
+    const j = await r.json();
+    SHA = j.sha;
+    DB = migrate(JSON.parse(b64ToUtf8(j.content.replace(/\n/g, ""))));
+    renderAll();
+    setSync("Live · synced with team ✓");
+  } catch (e) {
+    const s = e.message;
+    setSync(s === "401" || s === "403" ? "No access: check your token" : "Connection error: " + s, true);
+  }
+}
+
+async function doSave() {
+  const t = getToken();
+  if (!t) { ERR = "Not saved: no token"; return false; }
+  const body = { message: "update dashboard data", content: utf8ToB64(JSON.stringify(DB, null, 2)), branch: BRANCH };
+  if (SHA) body.sha = SHA;
+  try {
+    const r = await fetch(API, { method: "PUT", headers: { ...ghHeaders(t), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(String(r.status));
+    SHA = (await r.json()).content.sha;
+    return true;
+  } catch (e) {
+    const s = e.message;
+    ERR = s === "409" ? "Conflict: reload the page and retry"
+        : (s === "401" || s === "403") ? "Not saved: token has no write access"
+        : "Not saved: connection error";
+    return false;
+  }
+}
+
+// Saves are queued so rapid edits never overwrite each other.
+function persist() {
+  PENDING++; setSync("Saving…");
+  QUEUE = QUEUE.then(doSave).then(ok => {
+    PENDING--;
+    if (!PENDING) setSync(ok ? "All changes saved ✓" : ERR, !ok);
+  });
+}
+window.addEventListener("beforeunload", e => { if (PENDING > 0) { e.preventDefault(); e.returnValue = ""; } });
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const dt = s => { const [y, m, dd] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, dd); };
+const fmt = t => new Date(t).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+const NOW = new Date();
+const YR = NOW.getFullYear();
+const YEAR0 = Date.UTC(YR, 0, 1), YEAR1 = Date.UTC(YR + 1, 0, 1);
+const pct = t => (t - YEAR0) / (YEAR1 - YEAR0) * 100;
+const today = Date.UTC(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+const LBL = { ok: "Done", run: "Running", crit: "Overdue", off: "Not started" };
+const PILL = { ok: "p-ok", run: "p-run", crit: "p-crit", off: "p-off" };
+const COL = { ok: "#10b981", run: "#3b82f6", crit: "#ef4444", off: "#94a3b8" };
+const statusOf = p => p.status === "Done" ? "ok" : (dt(p.selesai) < today ? "crit" : p.status === "Running" ? "run" : "off");
+const initials = n => String(n).split(" ").map(w => w[0] || "").join("").slice(0, 2);
+const toast = msg => { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1600); };
+
+function renderReport() {
+  const P = DB.P, SP = DB.SP;
+  const avg = P.length ? Math.round(P.reduce((a, p) => a + (+p.progres || 0), 0) / P.length) : 0;
+  const cnt = { ok: 0, run: 0, crit: 0, off: 0 };
+  P.forEach(p => cnt[statusOf(p)]++);
+  $("#rTotal").textContent = P.length;
+  $("#rRun").textContent = P.filter(p => p.status === "Running").length;
+  $("#rLate").textContent = cnt.crit;
+  $("#rAvg").textContent = avg + "%";
+  $("#rLow").textContent = SP.filter(s => s.stok < s.min).length;
+
+  let off = 25, arcs = "";
+  Object.keys(cnt).forEach(k => {
+    if (!cnt[k] || !P.length) return;
+    const len = cnt[k] / P.length * 100;
+    arcs += `<circle cx="21" cy="21" r="15.9" fill="none" stroke="${COL[k]}" stroke-width="5" stroke-dasharray="${len} ${100 - len}" stroke-dashoffset="${off}"/>`;
+    off -= len;
+  });
+  $("#donut").innerHTML = `<circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--line)" stroke-width="5"/>${arcs}
+    <text x="21" y="20" text-anchor="middle" font-size="6" font-weight="700" fill="var(--text)">${avg}%</text>
+    <text x="21" y="26" text-anchor="middle" font-size="2.6" fill="var(--muted)">average</text>`;
+  $("#legend").innerHTML = Object.keys(cnt).map(k =>
+    `<div><span><span class="dot" style="background:${COL[k]}"></span>${LBL[k]}</span><b>${cnt[k]}</b></div>`).join("");
+  $("#reportRows").innerHTML = P.length ? `<div class="prog" style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em"><div>Project</div><div>Progress</div><div></div><div>Remarks</div></div>` + P.map(p => `
+    <div class="prog">
+      <div><b>${esc(p.nama)}</b><div class="sub">${esc(p.pic)}</div></div>
+      <div class="track"><i style="width:${p.progres}%"></i></div>
+      <div class="pct">${p.progres}%</div>
+      <div class="sub" style="font-size:13px;color:var(--text)">${esc(p.remarks || "–")}</div>
+    </div>`).join("") : `<div class="sub">No projects yet. Click "+ Add project" in the Tracker tab.</div>`;
+}
+
+function renderTracker() {
+  $("#pcards").innerHTML = DB.P.map((p, i) => {
+    const s = statusOf(p);
+    return `<div class="pc">
+      <div class="pc-top">
+        <div><b style="font-size:15px">${esc(p.nama)}</b>
+          <div class="pc-meta" style="margin-top:4px;justify-content:flex-start;align-items:center"><span class="avatar">${esc(initials(p.pic))}</span>${esc(p.pic)}</div></div>
+        <span class="pill ${PILL[s]}">${LBL[s]}</span>
+      </div>
+      <div class="track"><i style="width:${p.progres}%"></i></div>
+      <div class="pc-meta"><span>Progress</span><b style="color:var(--text)">${p.progres}%</b></div>
+      <input type="range" min="0" max="100" value="${p.progres}" data-t="P" data-i="${i}" data-f="progres">
+      <div class="pc-meta"><span>${fmt(dt(p.mulai))}</span><span>→ ${fmt(dt(p.selesai))}</span></div>
+      <select class="st" data-t="P" data-i="${i}" data-f="status">
+        ${["Not started","Running","Done"].map(o => `<option ${o === p.status ? "selected" : ""}>${o}</option>`).join("")}
+      </select>
+      <div class="pc-acts">
+        <button class="ibtn" data-act="edit" data-t="P" data-i="${i}" title="Edit">✏️</button>
+        <button class="ibtn danger" data-act="del" data-t="P" data-i="${i}" title="Delete">🗑️</button>
+      </div>
+    </div>`;
+  }).join("") || `<div class="sub">No projects yet.</div>`;
+}
+
+function renderTimeline() {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const head = `<div class="tl-head"><div></div><div class="months">${months.map((m, i) =>
+    `<span style="left:${pct(Date.UTC(YR, i, 1))}%">${m}</span>`).join("")}</div></div>`;
+  const grid = months.map((_, i) => `<div class="gridline" style="left:${pct(Date.UTC(YR, i, 1))}%"></div>`).join("");
+  const rows = DB.P.map(p => {
+    const s = statusOf(p), a = dt(p.mulai), b = dt(p.selesai);
+    const l = Math.max(0, pct(a)), r = Math.min(100, pct(b));
+    return `<div class="tl-row">
+      <div style="padding-right:12px"><b>${esc(p.nama)}</b><div class="sub">${esc(p.pic)} · ${p.progres}%</div></div>
+      <div class="tl-track">${grid}
+        <div class="tl-bar ${s}" style="left:${l}%;width:${Math.max(0, r - l)}%" title="${fmt(a)} – ${fmt(b)}">${p.progres}% · ${esc(p.nama)}</div>
+      </div></div>`;
+  }).join("");
+  $("#tl").innerHTML = head + `<div style="position:relative">${rows}<div class="today" style="left:calc(200px + (100% - 200px) * ${pct(today) / 100})"></div></div>`;
+}
+
+let docCat = "All";
+function renderDocs() {
+  const cats = ["All", ...new Set(DB.DOC.map(x => x.kat).filter(Boolean))];
+  if (!cats.includes(docCat)) docCat = "All";
+  $("#docChips").innerHTML = cats.map(c => `<button class="${c === docCat ? "on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  const q = $("#docSearch").value.toLowerCase();
+  const list = DB.DOC.map((x, i) => ({ x, i })).filter(({ x }) => (docCat === "All" || x.kat === docCat) && String(x.nama).toLowerCase().includes(q));
+  $("#docGrid").innerHTML = list.length ? list.map(({ x, i }) => `
+    <div class="doc"><div class="ico" style="background:linear-gradient(135deg,#6366f1,#06b6d4)">${esc(x.ico || "📄")}</div>
+      <div class="t"><b>${esc(x.nama)}</b><small>${esc(x.kat)} · ${esc(x.ver)} · ${fmt(dt(x.tgl))}</small>
+        ${docFile(x, i)}<div class="acts"><button class="ibtn" data-act="edit" data-t="DOC" data-i="${i}" title="Edit">✏️</button><button class="ibtn danger" data-act="del" data-t="DOC" data-i="${i}" title="Delete">🗑️</button></div>
+      </div></div>`).join("") : `<div class="sub">No matching documents.</div>`;
+}
+
+function renderSpare() {
+  const q = $("#spSearch").value.toLowerCase();
+  const max = Math.max(1, ...DB.SP.map(s => s.min * 2));
+  const rows = DB.SP.map((s, i) => ({ s, i })).filter(({ s }) =>
+    (s.nama + s.kode + s.mesin).toLowerCase().includes(q)).map(({ s, i }) => {
+    const low = s.stok < s.min, zero = s.stok === 0;
+    const st = zero ? ["Out of stock", "p-crit"] : low ? ["Low stock", "p-warn"] : ["OK", "p-ok"];
+    const w = Math.min(100, s.stok / max * 100);
+    return `<tr>
+      <td><b>${esc(s.kode)}</b></td><td>${esc(s.nama)}</td><td>${esc(s.mesin)}</td><td>${esc(s.lokasi)}</td>
+      <td><div class="stock"><button data-act="stock" data-i="${i}" data-d="-1">−</button><b>${s.stok}</b><button data-act="stock" data-i="${i}" data-d="1">+</button></div></td>
+      <td><div class="mini"><i class="${zero ? "zero" : low ? "low" : ""}" style="width:${w}%"></i></div></td>
+      <td><span class="pill ${st[1]}">${st[0]}</span></td>
+      <td style="white-space:nowrap"><button class="ibtn" data-act="edit" data-t="SP" data-i="${i}" title="Edit">✏️</button> <button class="ibtn danger" data-act="del" data-t="SP" data-i="${i}" title="Delete">🗑️</button></td></tr>`;
+  });
+  $("#spBody").innerHTML = rows.join("") || `<tr><td colspan="8" class="sub">No spare parts.</td></tr>`;
+}
+
+let ASSETS = null;
+async function upload(file, apply) {
+  if (file.size > 20 * 1024 * 1024) return toast("Maximum file size is 20 MB");
+  const t = getToken();
+  if (!t) return toast("No token: cannot upload");
+  toast("Uploading...");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b));
+  const folder = (file.type || "").startsWith("image/") ? "machine-photos" : "manuals";
+  const path = `${folder}/${Date.now()}_${file.name.replace(/[^\w.\-]/g, "_")}`;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+      method: "PUT",
+      headers: { ...ghHeaders(t), "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "upload " + file.name, content: btoa(bin), branch: BRANCH })
+    });
+    if (!r.ok) throw new Error(String(r.status));
+    apply({ id: path, url: `https://github.com/${REPO}/raw/${BRANCH}/${path}` }, file);
+    persist(); renderAll(); toast("File uploaded");
+  } catch (e) { toast("Upload failed: " + e.message); }
+}
+function uploadBtn(label, t, i, accept) {
+  return `<label class="btn" style="padding:4px 8px;font-size:12px;cursor:pointer">${label}<input type="file" accept="${accept}" hidden data-up="${t}:${i}"></label>`;
+}
+function docFile(x, i) {
+  const open = x.furl ? `<a class="btn" style="padding:4px 8px;font-size:12px;text-decoration:none;color:var(--text)" href="${esc(x.furl)}" target="_blank" rel="noopener">📄 Open file</a>` : "";
+  return `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${open}${uploadBtn(x.furl ? "Replace file" : "📎 Upload file", "DOC", i, "application/pdf,image/*,.txt,.csv,.md")}</div>`;
+}
+function renderMachine() {
+  DB.MESIN ||= JSON.parse(JSON.stringify(SAMPLE.MESIN));
+  $("#machineGrid").innerHTML = DB.MESIN.map((m, i) => `
+    <div class="doc" style="flex-direction:column;align-items:stretch">
+      <div style="aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:var(--line);display:grid;place-items:center;font-size:40px">
+        ${m.imgUrl ? `<img src="${esc(m.imgUrl)}" alt="${esc(m.nama)}" style="width:100%;height:100%;object-fit:cover">` : "🏭"}
+      </div>
+      <div class="t"><b>${esc(m.nama)}</b><small>${esc(m.lokasi)}</small></div>
+      <div class="acts">${uploadBtn(m.imgUrl ? "Replace photo" : "📷 Upload photo", "MESIN", i, "image/*")}
+        <button class="ibtn" data-act="edit" data-t="MESIN" data-i="${i}" title="Edit">✏️</button>
+        <button class="ibtn danger" data-act="del" data-t="MESIN" data-i="${i}" title="Delete">🗑️</button></div>
+    </div>`).join("") || `<div class="sub">No machines yet.</div>`;
+}
+function renderAll() { renderReport(); renderMachine(); renderTracker(); renderTimeline(); renderDocs(); renderSpare(); }
+
+// ---------- form modal
+let editing = null;
+function openForm(t, i) {
+  editing = { t, i };
+  const item = i >= 0 ? DB[t][i] : {};
+  $("#mTitle").textContent = (i >= 0 ? "Edit " : "Add ") + SCHEMA[t].title;
+  $("#mForm").innerHTML = SCHEMA[t].fields.map(([k, label, type, opts]) => {
+    const v = item[k] ?? (type === "select" ? opts[0] : "");
+    const input = type === "select"
+      ? `<select name="${k}">${opts.map(o => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("")}</select>`
+      : `<input name="${k}" type="${type}" value="${esc(v)}"${type === "number" ? ' min="0"' + (k === "progres" ? ' max="100"' : "") : ""}>`;
+    return `<label class="field">${label}${input}</label>`;
+  }).join("");
+  $("#modal").classList.add("open");
+}
+function closeForm() { $("#modal").classList.remove("open"); editing = null; }
+function saveForm() {
+  const { t, i } = editing;
+  const obj = {};
+  for (const [k, , type] of SCHEMA[t].fields) {
+    const v = $(`#mForm [name="${k}"]`).value;
+    obj[k] = type === "number" ? Math.max(0, +v || 0) : v.trim();
+  }
+  if (t === "P") obj.progres = Math.min(100, obj.progres);
+  if (!obj.nama) return toast("Name is required");
+  if (t === "P" && (!obj.mulai || !obj.selesai)) return toast("Enter start and end dates");
+  if (t === "DOC" && !obj.tgl) return toast("Enter document date");
+  if (i >= 0) DB[t][i] = { ...DB[t][i], ...obj }; else DB[t].push(obj);
+  persist(); closeForm(); renderAll(); toast("Saved");
+}
+function removeItem(t, i) {
+  if (!confirm(`Delete "${DB[t][i].nama}"?`)) return;
+  DB[t].splice(i, 1); persist(); renderAll(); toast("Deleted");
+}
+
+// ---------- events
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const { act, t, i } = b.dataset, idx = +i;
+  if (act === "add") openForm(t, -1);
+  if (act === "edit") openForm(t, idx);
+  if (act === "del") removeItem(t, idx);
+  if (act === "cancel") closeForm();
+  if (act === "save") saveForm();
+  if (act === "stock") { DB.SP[idx].stok = Math.max(0, DB.SP[idx].stok + +b.dataset.d); persist(); renderAll(); }
+  if (act === "export") $("#dataBox").value = JSON.stringify(DB, null, 2);
+  if (act === "import") {
+    try { const j = JSON.parse($("#dataBox").value); if (!j.P || !j.SP || !j.DOC) throw 0; DB = j; persist(); renderAll(); toast("Data restored"); }
+    catch (err) { toast("Invalid data format"); }
+  }
+  if (act === "reset" && confirm("Reset to sample data? Your current data will be lost.")) {
+    DB = JSON.parse(JSON.stringify(SAMPLE)); persist(); renderAll(); toast("Sample data restored");
+  }
+});
+document.addEventListener("change", e => {
+  const f = e.target;
+  if (f.dataset && f.dataset.newdoc && f.files[0]) {
+    const file = f.files[0];
+    f.value = "";
+    upload(file, r => DB.DOC.push({
+      nama: file.name.replace(/\.[^.]+$/, ""),
+      kat: docCat === "All" ? "Other" : docCat,
+      ver: "v1.0",
+      tgl: new Date().toISOString().slice(0, 10),
+      ico: "📄",
+      fid: r.id, furl: r.url, fname: file.name
+    }));
+    return;
+  }
+  if (!f.dataset || !f.dataset.up || !f.files[0]) return;
+  const [t, i] = f.dataset.up.split(":");
+  const file = f.files[0];
+  f.value = "";
+  upload(file, r => {
+    if (t === "MESIN") { DB.MESIN[+i].img = r.id; DB.MESIN[+i].imgUrl = r.url; }
+    else { DB.DOC[+i].fid = r.id; DB.DOC[+i].furl = r.url; DB.DOC[+i].fname = file.name; }
+  });
+});
+$("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeForm(); });
+$("#nav").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("active", x === b));
+  ["report", "tracker", "timeline", "docs", "data"].forEach(t => {
+    const el = $("#tab-" + t);
+    el.classList.toggle("hide", t !== b.dataset.tab);
+    if (t === b.dataset.tab) { el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade"); }
+  });
+  if (b.dataset.tab === "data") $("#dataBox").value = JSON.stringify(DB, null, 2);
+});
+$("#tab-tracker").addEventListener("change", e => {
+  const el = e.target; if (!el.dataset.f) return;
+  const v = el.dataset.f === "progres" ? +el.value : el.value;
+  DB[el.dataset.t][+el.dataset.i][el.dataset.f] = v;
+  persist(); renderAll(); toast("Saved");
+});
+$("#tab-tracker").addEventListener("input", e => {
+  const el = e.target; if (el.dataset.f !== "progres") return;
+  DB.P[+el.dataset.i].progres = +el.value; renderReport();
+});
+$("#docChips").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  docCat = b.dataset.c; renderDocs();
+});
+$("#docSearch").addEventListener("input", renderDocs);
+$("#spSearch").addEventListener("input", renderSpare);
+
+$("#clock").textContent = "Today · " + fmt(today) + " · Click ✏️ to edit data";
+renderAll();
+loadRemote();
+setInterval(loadRemote, 15000);
+</script>
+</body>
+</html>
